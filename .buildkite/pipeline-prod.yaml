@@ -1,0 +1,59 @@
+steps:
+  - block: "Input Parameters"
+    fields:
+      - text: "Environment"
+        hint: "Enter the environment to do the replay"
+        key: "env"      
+      - text: "Consumer group"
+        hint: "Enter consumer group to do the replay"
+        key: "consumer-group"
+      - text: "Topics"
+        hint: "Enter comma delimited topics to do the replay"
+        key: "topics"
+      - text: "Datetime"
+        hint: "Enter datetime that you want to set the offsets. Format: 'YYYY-MM-DDTHH:mm:SS.sss'"
+        key: "datetime"
+
+  - wait
+  - label: "Kafka reset-offsets dry run"
+    branches: "master"
+    agents:
+      environment: 'production'
+    command: |
+      .buildkite/install_dependencies.sh
+      python kafka_replay.py -d
+    plugins:
+      docker#v3.2.0:
+        image: "change_me"
+        workdir: /var/workspace
+        always-pull: true
+        volumes:
+          - "/var/secrets:/var/secrets"
+        mounts:
+          - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+          - AWS_DEFAULT_REGION
+          - AWS_ACCESS_KEY_ID
+          - AWS_SECRET_ACCESS_KEY
+  - wait
+  - block: 'Reset the offsets?'
+  - label: "Kafka reset-offsets execute"
+    branches: "master"
+    agents:
+      environment: 'production'
+    command: |
+      .buildkite/install_dependencies.sh
+      python kafka_replay.py -e
+    plugins:
+      docker#v3.2.0:
+        image: "change_me"
+        workdir: /var/workspace
+        always-pull: true
+        volumes:
+          - "/var/secrets:/var/secrets"
+        mounts:
+          - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+          - AWS_DEFAULT_REGION
+          - AWS_ACCESS_KEY_ID
+          - AWS_SECRET_ACCESS_KEY
